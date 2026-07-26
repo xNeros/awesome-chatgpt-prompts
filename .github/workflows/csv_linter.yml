@@ -2,7 +2,13 @@ name: CSV Linter and Trailing Whitespaces
 
 on:
   push:
+    paths:
+      - "prompts.csv"
+      - ".github/workflows/csv_linter.yml"
   pull_request:
+    paths:
+      - "prompts.csv"
+      - ".github/workflows/csv_linter.yml"
 
 jobs:
   lint_and_check_trailing_whitespaces:
