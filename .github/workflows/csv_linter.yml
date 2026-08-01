@@ -19,7 +19,18 @@ jobs:
       run: |
         python -m pip install -r .github/requirements-ci.txt
 
+    - name: Check prompts.csv presence
+      id: prompts_csv
+      run: |
+        if [ -f prompts.csv ]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+          echo "prompts.csv not found. Skipping CSV lint checks."
+        fi
+
     - name: Run csvclean on prompts.csv
+      if: steps.prompts_csv.outputs.exists == 'true'
       run: |
         csvclean --length-mismatch --empty-columns -u 2 prompts.csv > /tmp/prompts_clean.csv 2> csvclean_errors.log
         if [ -s csvclean_errors.log ]; then
@@ -27,6 +38,7 @@ jobs:
           exit 1
         fi
     - name: Check newline at EOF
+      if: steps.prompts_csv.outputs.exists == 'true'
       run: |
         last_byte=$(tail -c1 prompts.csv | od -An -t x1)
         if [ "$last_byte" != " 0a" ]; then
@@ -35,6 +47,7 @@ jobs:
           echo "prompts.csv ends with newline"
         fi
     - name: Check Trailing Whitespaces
+      if: steps.prompts_csv.outputs.exists == 'true'
       run: |
         # Check if the special file contains any trailing whitespaces
         if grep -q "[[:space:]]$" ./prompts.csv; then
