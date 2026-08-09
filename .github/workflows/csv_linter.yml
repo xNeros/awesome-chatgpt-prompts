@@ -8,9 +8,11 @@ jobs:
   lint_and_check_trailing_whitespaces:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be0f8ed68aafcccdf0  # v4
+      with:
+        persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0410993404601b3ef26  # v5
       with:
         python-version: "3.12"
         cache: pip
@@ -34,10 +36,12 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        # Run csvclean but don't let its nonzero exit code abort the script so we can print errors
-        csvclean --length-mismatch --empty-columns -u 2 prompts.csv > /tmp/prompts_clean.csv 2> csvclean_errors.log || true
-        if [ -s csvclean_errors.log ]; then
-          cat csvclean_errors.log
+        # Capture csvclean exit code while preserving error output for debugging
+        exit_code=0
+        csvclean --length-mismatch --empty-columns -u 2 prompts.csv > /tmp/prompts_clean.csv 2> csvclean_errors.log || exit_code=$?
+        # Report errors and fail if csvclean found issues or exited nonzero
+        if [ -s csvclean_errors.log ] || [ "$exit_code" -ne 0 ]; then
+          [ -s csvclean_errors.log ] && cat csvclean_errors.log
           exit 1
         fi
     - name: Check newline at EOF
