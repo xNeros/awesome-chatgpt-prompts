@@ -31,8 +31,11 @@ jobs:
 
     - name: Run csvclean on prompts.csv
       if: steps.prompts_csv.outputs.exists == 'true'
+      shell: bash
       run: |
-        csvclean --length-mismatch --empty-columns -u 2 prompts.csv > /tmp/prompts_clean.csv 2> csvclean_errors.log
+        set -euo pipefail
+        # Run csvclean but don't let its nonzero exit code abort the script so we can print errors
+        csvclean --length-mismatch --empty-columns -u 2 prompts.csv > /tmp/prompts_clean.csv 2> csvclean_errors.log || true
         if [ -s csvclean_errors.log ]; then
           cat csvclean_errors.log
           exit 1
