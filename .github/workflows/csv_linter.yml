@@ -42,6 +42,15 @@ jobs:
           echo "prompts.csv not found. Skipping CSV lint checks."
         fi
 
+    - name: Lint CSV files
+      run: find . -name "*.csv" -exec csvclean --length-mismatch --empty-columns -u 2 {} +
+      env:
+        CI: true
+    - name: Check for errors
+      if: always()
+      run: |
+        if ! grep -q "No errors." <(find . -name "*.csv" -exec csvclean --length-mismatch --empty-columns -u 2 {} + | grep -v "^$"); then
+          echo "Errors were found in one or more CSV files."
     - name: Run csvclean on prompts.csv
       if: steps.prompts_csv.outputs.exists == 'true'
       shell: bash
